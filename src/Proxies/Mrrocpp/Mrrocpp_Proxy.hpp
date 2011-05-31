@@ -151,13 +151,7 @@ private:
 	};
 
 	MrrocppProxyState state;
-	/**
-	 * Event handler called when new reading is ready.
-	 */
-	void onNewReading();
-	void serviceReading();
 
-	Base::EventHandler <Mrrocpp_Proxy> h_onNewReading;
 	Base::DataStreamInPtr <Types::Mrrocpp_Proxy::Reading, Base::DataStreamBuffer::Newest, Base::Synchronization::Mutex> reading;
 
 	/**
@@ -177,7 +171,6 @@ private:
 	boost::shared_ptr <xdr_oarchive <> > oarchive;
 
 	boost::shared_ptr <Types::Mrrocpp_Proxy::Reading> readingMessage;
-	//struct timespec readingTimestamp;
 	boost::shared_ptr <Types::Mrrocpp_Proxy::Reading> rpcResultMessage;
 
 	void receiveBuffersFromMrrocpp();
@@ -199,7 +192,7 @@ private:
 	Base::Property<int> port;
 
 	double waitForRequestTimeout;
-
+	double acceptConnectionTimeout;
 
 	Common::Timer timer;
 

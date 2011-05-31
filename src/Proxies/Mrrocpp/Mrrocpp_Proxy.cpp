@@ -28,9 +28,11 @@ Mrrocpp_Proxy::Mrrocpp_Proxy(const std::string & name) :
 	header_oarchive = boost::shared_ptr <xdr_oarchive <> >(new xdr_oarchive <> );
 	oarchive = boost::shared_ptr <xdr_oarchive <> >(new xdr_oarchive <> );
 
+	memset(&imh, 0, sizeof(imh));
+	memset(&rmh, 0, sizeof(rmh));
+
 	// determine imh size in XDR format
-	initiate_message_header rmh;
-	*header_oarchive << rmh;
+	*header_oarchive << imh;
 	initiate_message_header_size = header_oarchive->getArchiveSize();
 	header_oarchive->clear_buffer();
 
@@ -39,6 +41,7 @@ Mrrocpp_Proxy::Mrrocpp_Proxy(const std::string & name) :
 	registerProperty(port);
 
 	waitForRequestTimeout = 0.12;
+	acceptConnectionTimeout = 0.1;
 	//waitForRequestTimeout = numeric_limits <double>::infinity();
 }
 
@@ -57,8 +60,6 @@ bool Mrrocpp_Proxy::onInit()
 {
 	LOG(LTRACE) << "Mrrocpp_Proxy::onInit\n";
 
-	h_onNewReading.setup(this, &Mrrocpp_Proxy::onNewReading);
-	registerHandler("onNewReading", &h_onNewReading);
 	registerStream("reading", &reading);
 
 	rpcCall = registerEvent("rpcCall");
@@ -69,8 +70,8 @@ bool Mrrocpp_Proxy::onInit()
 
 	serverSocket.setupServerSocket(port);
 
-	readingMessage = boost::shared_ptr <Types::Mrrocpp_Proxy::Reading>((Types::Mrrocpp_Proxy::Reading*)NULL);
-	rpcResultMessage = boost::shared_ptr <Types::Mrrocpp_Proxy::Reading>((Types::Mrrocpp_Proxy::Reading*)NULL);
+	readingMessage.reset();
+	rpcResultMessage.reset();
 
 	state = MPS_LISTENING;
 
@@ -88,8 +89,8 @@ bool Mrrocpp_Proxy::onFinish()
 	LOG(LTRACE) << "Mrrocpp_Proxy::onFinish\n";
 	serverSocket.closeSocket();
 
-	readingMessage = boost::shared_ptr <Types::Mrrocpp_Proxy::Reading>((Types::Mrrocpp_Proxy::Reading*)NULL);
-	rpcResultMessage = boost::shared_ptr <Types::Mrrocpp_Proxy::Reading>((Types::Mrrocpp_Proxy::Reading*)NULL);
+	readingMessage.reset();
+	rpcResultMessage.reset();
 
 	state = MPS_NOT_INITIALIZED;
 
@@ -131,19 +132,15 @@ bool Mrrocpp_Proxy::onStep()
 void Mrrocpp_Proxy::tryAcceptConnection()
 {
 	LOG(LTRACE) << "Mrrocpp_Proxy::tryAcceptConnection()\n";
-	if (!serverSocket.isDataAvailable(numeric_limits <double>::infinity())) {
+	if (!serverSocket.isDataAvailable(acceptConnectionTimeout)) {
 		LOG(LTRACE) << "if (!serverSocket.isDataAvailable()) {\n";
 		return;
 	}
 	clientSocket = serverSocket.acceptConnection();
-	{
-//		readingMessage = boost::shared_ptr <Types::Mrrocpp_Proxy::Reading>((Types::Mrrocpp_Proxy::Reading*)NULL);
-//		rpcResultMessage = boost::shared_ptr <Types::Mrrocpp_Proxy::Reading>((Types::Mrrocpp_Proxy::Reading*)NULL);
-//
-//		if(readingMessage.get() != 0){
-//			LOG(LFATAL) << "readingMessage.get() != 0";
-//		}
-	}
+
+	readingMessage.reset();
+	rpcResultMessage.reset();
+
 	LOG(LNOTICE) << "Client connected.";
 	state = MPS_CONNECTED;
 }
@@ -164,16 +161,12 @@ void Mrrocpp_Proxy::tryReceiveFromMrrocpp()
 				oarchive->clear_buffer();
 				if(!reading.empty()){
 					readingMessage = reading.read();
-				//}
-				//if (readingMessage.get() != 0) { // there is no reading ready
 					rmh.is_rpc_call = false;
-//					rmh.imageSourceTimeNanoseconds = readingTimestamp.tv_nsec;
-//					rmh.imageSourceTimeSeconds = readingTimestamp.tv_sec;
 					readingMessage->send(oarchive);
 				}
 
 				sendBuffersToMrrocpp();
-				readingMessage = boost::shared_ptr <Types::Mrrocpp_Proxy::Reading>((Types::Mrrocpp_Proxy::Reading*)NULL);
+				readingMessage.reset();
 			}
 		}
 	} catch (std::exception& ex) {
@@ -183,24 +176,6 @@ void Mrrocpp_Proxy::tryReceiveFromMrrocpp()
 		state = MPS_LISTENING;
 	}
 	//LOG(LFATAL)<<"Mrrocpp_Proxy::tryReceiveFromMrrocpp() end\n";
-}
-
-void Mrrocpp_Proxy::onNewReading()
-{
-//	if(state == MPS_CONNECTED){
-//		if(!reading.empty()){
-//			readingMessage = reading.read();
-//		} else {
-//			LOG(LWARNING) << "Component " << name() << ": input data stream reading is empty. Probably no datastream connected.";
-//		}
-//		if (!in_timestamp.empty()) {
-//			readingTimestamp = in_timestamp.read();
-//		}
-//	} else {
-//		if(!reading.empty()){
-//			reading.read();
-//		}
-//	}
 }
 
 void Mrrocpp_Proxy::onRpcResult()
@@ -254,7 +229,6 @@ void Mrrocpp_Proxy::sendBuffersToMrrocpp()
 		rmh.sendTimeSeconds = 0;
 		rmh.sendTimeNanoseconds = 0;
 	}
-
 
 	header_oarchive->clear_buffer();
 	*header_oarchive << rmh;
