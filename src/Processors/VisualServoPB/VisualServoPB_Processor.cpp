@@ -96,8 +96,6 @@ void VisualServoPB_Processor::saveTime(Types::Mrrocpp_Proxy::PBReading& reading)
 	if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
 		reading.processingEndSeconds = ts.tv_sec;
 		reading.processingEndNanoseconds = ts.tv_nsec;
-//		LOG(LNOTICE)<<"ts.tv_sec = "<<ts.tv_sec<<" ; ts.tv_nsec = "<<ts.tv_nsec;
-//		LOG(LNOTICE)<<"reading.processingEndSeconds = "<<reading.processingEndSeconds<<" ; reading.processingEndNanoseconds = "<<reading.processingEndNanoseconds;
 	} else {
 		LOG(LWARNING) << "VisualServoPB_Processor::saveTime(): clock_gettime() != 0";
 		reading.processingEndSeconds = 0;
@@ -108,19 +106,17 @@ void VisualServoPB_Processor::saveTime(Types::Mrrocpp_Proxy::PBReading& reading)
 		ts = in_timestamp.read();
 		reading.processingStartSeconds = ts.tv_sec;
 		reading.processingStartNanoseconds = ts.tv_nsec;
-
-//		LOG(LNOTICE)<<"ts.tv_sec = "<<ts.tv_sec<<" ; ts.tv_nsec = "<<ts.tv_nsec;
-//		LOG(LNOTICE)<<"reading.processingStartSeconds = "<<reading.processingStartSeconds<<" ; reading.processingStartNanoseconds = "<<reading.processingStartNanoseconds;
 	} else {
 		LOG(LWARNING) << "VisualServoPB_Processor::saveTime(): in_timestamp.empty()";
 		reading.processingStartSeconds = 0;
 		reading.processingStartNanoseconds = 0;
 	}
 
-//	LOG(LWARNING) << "VisualServoPB: processingStart = "<<reading.processingStartSeconds << "s " << reading.processingStartNanoseconds << "ns";
-//	LOG(LWARNING) << "VisualServoPB: processingEnd = "<<reading.processingEndSeconds << "s " << reading.processingEndNanoseconds << "ns";
-
-	//LOG(LNOTICE)<<endl;
+//	double processingDelay = (reading.processingEndSeconds - reading.processingStartSeconds) + 1e-9 * (reading.processingEndNanoseconds - reading.processingStartNanoseconds);
+//	double maxAcceptableDelay = 0.035;
+//	if(processingDelay > maxAcceptableDelay){
+//		LOG(LWARNING) << "processingDelay ("<<processingDelay<<") > maxAcceptableDelay (" << maxAcceptableDelay << ")";
+//	}
 }
 
 }//: namespace VisualServoPB
