@@ -19,7 +19,8 @@ namespace Mrrocpp_Proxy {
 class Reading
 {
 public:
-	Reading()
+	Reading():
+		processingStartSeconds(0), processingStartNanoseconds(0), processingEndSeconds(0), processingEndNanoseconds(0)
 	{
 	}
 
