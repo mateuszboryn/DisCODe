@@ -55,6 +55,13 @@ MACRO(DISCODE_FIND_DCL DCL_NAME)
             
                 MESSAGE(STATUS "${DCL_NAME} found.")
                 SET( DISCODE_${DCL_NAME}_FOUND 1 CACHE INTERNAL "${DCL_NAME} already found")
+                SET( DISCODE_${DCL_NAME}_DIR ${DISCODE_DCL_DIR}/${DCL_NAME} CACHE INTERNAL "${DCL_NAME} dir")
+            
+            ELSEIF(EXISTS ${DISCODE_DCL_DIR}/DCL_${DCL_NAME})
+            
+                MESSAGE(STATUS "${DCL_NAME} found.")
+                SET( DISCODE_${DCL_NAME}_FOUND 1 CACHE INTERNAL "${DCL_NAME} already found")
+                SET( DISCODE_${DCL_NAME}_DIR ${DISCODE_DCL_DIR}/DCL_${DCL_NAME} CACHE INTERNAL "${DCL_NAME} dir")
             
             ENDIF(EXISTS ${DISCODE_DCL_DIR}/${DCL_NAME})
     
@@ -68,6 +75,9 @@ MACRO(DISCODE_FIND_DCL DCL_NAME)
         IF (EXISTS ${DISCODE_DCL_DIR}/${DCL_NAME}/dist/${DCL_NAME}Config.cmake)
             # include it if it exists
             INCLUDE(${DISCODE_DCL_DIR}/${DCL_NAME}/dist/${DCL_NAME}Config.cmake)
+        ELSEIF (EXISTS ${DISCODE_DCL_DIR}/DCL_${DCL_NAME}/dist/${DCL_NAME}Config.cmake)
+            # include it if it exists
+            INCLUDE(${DISCODE_DCL_DIR}/DCL_${DCL_NAME}/dist/${DCL_NAME}Config.cmake)
         ELSE (EXISTS ${DISCODE_DCL_DIR}/${DCL_NAME}/dist/${DCL_NAME}Config.cmake)
             # print error message and stop compilation
             MESSAGE( FATAL_ERROR "${DCL_NAME} DCL found, but ${DCL_NAME}Config.cmake not found" )
