@@ -76,6 +76,7 @@ public:
 
 		if (dcl_locations.size() < 1) {
 			LOG(LWARNING) << "No DCL locations speecified.";
+			LOG(LNOTICE) << "   Try setting DISCODE_DCL_DIR environment variable.";
 			return;
 		}
 
